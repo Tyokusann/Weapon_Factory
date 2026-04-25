@@ -228,3 +228,7 @@ project-root/
       weapons/
     tilesets/
     audio/
+
+## 16. 基本仕様書（初版）
+
+実装開始用の基本仕様は `docs/basic-spec.md` を参照。
