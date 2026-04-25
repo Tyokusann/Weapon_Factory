@@ -33,3 +33,15 @@ npm run build
 ## 目標体験
 
 「森で素材を集め、木の剣を作り、スライムを倒せる」
+
+
+## Cloudflare Workers / Pages デプロイ（Wrangler）
+
+このリポジトリは静的アセット配信を想定し、`wrangler.toml` に静的アセット配信設定（`[assets] directory = "./dist"`）を設定しています。
+
+```bash
+npm run build
+npx wrangler versions upload
+```
+
+`npx wrangler versions upload` が `Missing entry-point` で失敗する場合は、`wrangler.toml` が存在することと `dist` が生成済みであることを確認してください。
