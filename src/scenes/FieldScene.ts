@@ -2,9 +2,12 @@ import Phaser from 'phaser';
 import { MATERIAL_NAME_BY_ID, SLIME_MASTER, WEAPON_BY_ID } from '../data/gameData';
 import { gameStore } from '../systems/GameStore';
 
+type Facing = Phaser.Math.Vector2;
+
 export class FieldScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private slime?: Phaser.Physics.Arcade.Sprite;
+  private woodNodes?: Phaser.Physics.Arcade.StaticGroup;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: { [key: string]: Phaser.Input.Keyboard.Key };
   private hpText?: Phaser.GameObjects.Text;
@@ -15,6 +18,7 @@ export class FieldScene extends Phaser.Scene {
   private lastAttackAt = 0;
   private lastTakenDamageAt = 0;
   private inventoryVisible = false;
+  private facing: Facing = new Phaser.Math.Vector2(1, 0);
 
   constructor() {
     super('FieldScene');
@@ -22,19 +26,24 @@ export class FieldScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor('#2f5d3a');
+    this.physics.world.setBounds(24, 24, 752, 552);
+
+    this.add.rectangle(400, 300, 760, 560, 0x3a7448, 0.35).setStrokeStyle(3, 0x9ed59f, 0.55);
+    this.add.circle(760, 80, 38, 0xfff2b0, 0.35);
+    this.add.text(620, 46, 'Sweet Forest', { fontSize: '22px', color: '#e8ffd7' });
 
     this.player = this.physics.add.sprite(120, 280, 'player');
     this.player.setCollideWorldBounds(true);
 
     this.spawnSlime(520, 320);
 
-    const woodNodes = this.physics.add.staticGroup();
+    this.woodNodes = this.physics.add.staticGroup();
     [
       { x: 240, y: 190 },
       { x: 170, y: 460 },
       { x: 640, y: 130 },
       { x: 620, y: 460 }
-    ].forEach((pos) => woodNodes.create(pos.x, pos.y, 'woodNode'));
+    ].forEach((pos) => this.woodNodes?.create(pos.x, pos.y, 'woodNode'));
 
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,E,C,I,SPACE') as Record<string, Phaser.Input.Keyboard.Key>;
@@ -44,24 +53,11 @@ export class FieldScene extends Phaser.Scene {
     this.inventoryText = this.add
       .text(16, 72, '', { fontSize: '17px', color: '#d8e4ff', backgroundColor: '#1b2436', padding: { x: 8, y: 6 } })
       .setVisible(false);
-    this.updateUi();
+    this.updateUi('森に到着！かわいい冒険者でE採取、Space攻撃、Cクラフト！');
 
     this.input.keyboard?.on('keydown-C', () => this.scene.start('CraftScene'));
     this.input.keyboard?.on('keydown-I', () => this.toggleInventory());
-
-    this.input.keyboard?.on('keydown-E', () => {
-      woodNodes.children.entries.forEach((entry) => {
-        const node = entry as Phaser.Physics.Arcade.Sprite;
-        if (!node.active) return;
-
-        const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, node.x, node.y);
-        if (distance <= 44) {
-          gameStore.inventory.addMaterial('wood', 1);
-          node.disableBody(true, true);
-          this.updateUi(`${MATERIAL_NAME_BY_ID.wood}を1つ入手！`);
-        }
-      });
-    });
+    this.input.keyboard?.on('keydown-E', () => this.tryGather());
   }
 
   update(time: number): void {
@@ -103,18 +99,56 @@ export class FieldScene extends Phaser.Scene {
     if (vx !== 0 && vy !== 0) {
       this.player.setVelocity(vx * 0.707, vy * 0.707);
     }
+
+    if (vx !== 0 || vy !== 0) {
+      this.facing.set(vx, vy).normalize();
+    }
+  }
+
+  private tryGather(): void {
+    const node = this.findNearestNode();
+    if (!node) {
+      this.updateUi('近くに採取ポイントがありません。');
+      return;
+    }
+
+    gameStore.inventory.addMaterial('wood', 1);
+    node.disableBody(true, true);
+    this.updateUi(`${MATERIAL_NAME_BY_ID.wood}を1つ入手！`);
+  }
+
+  private findNearestNode(): Phaser.Physics.Arcade.Sprite | undefined {
+    let nearest: Phaser.Physics.Arcade.Sprite | undefined;
+    let nearestDist = Number.POSITIVE_INFINITY;
+
+    this.woodNodes?.children.entries.forEach((entry) => {
+      const node = entry as Phaser.Physics.Arcade.Sprite;
+      if (!node.active) return;
+
+      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, node.x, node.y);
+      if (distance <= 44 && distance < nearestDist) {
+        nearest = node;
+        nearestDist = distance;
+      }
+    });
+
+    return nearest;
   }
 
   private tryAttack(time: number): void {
-    if (time - this.lastAttackAt < 320) return;
+    const weapon = WEAPON_BY_ID[gameStore.inventory.getEquippedWeapon()];
+    const cooldown = Math.max(180, Math.round(1000 / weapon.attackSpeed));
+
+    if (time - this.lastAttackAt < cooldown) return;
     this.lastAttackAt = time;
 
     if (!this.slime?.active) return;
 
-    const weapon = WEAPON_BY_ID[gameStore.inventory.getEquippedWeapon()];
-    const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.slime.x, this.slime.y);
+    const toEnemy = new Phaser.Math.Vector2(this.slime.x - this.player.x, this.slime.y - this.player.y);
+    const distance = toEnemy.length();
+    const isForward = toEnemy.normalize().dot(this.facing) >= 0.25;
 
-    if (distance <= weapon.range) {
+    if (distance <= weapon.range && isForward) {
       this.enemyHp -= weapon.attack;
       this.updateUi(`${weapon.name}で${weapon.attack}ダメージ！`);
 
@@ -125,7 +159,10 @@ export class FieldScene extends Phaser.Scene {
         this.updateUi(`${SLIME_MASTER.name}撃破！ ${MATERIAL_NAME_BY_ID[drop.materialId]}を${drop.count}個入手。`);
         this.time.delayedCall(3000, () => this.spawnSlime(530, 300));
       }
+      return;
     }
+
+    this.updateUi('攻撃が届かなかった。敵の正面でSpace！');
   }
 
   private spawnSlime(x: number, y: number): void {
