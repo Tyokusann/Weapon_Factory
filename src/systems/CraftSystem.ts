@@ -5,8 +5,8 @@ export class CraftSystem {
   constructor(private inventory: InventorySystem) {}
 
   canCraftWoodSword(): boolean {
-    return Object.entries(WOOD_SWORD_RECIPE).every(([id, count]) => {
-      return this.inventory.getMaterialCount(id as keyof typeof WOOD_SWORD_RECIPE) >= count;
+    return WOOD_SWORD_RECIPE.materials.every((material) => {
+      return this.inventory.getMaterialCount(material.materialId) >= material.count;
     });
   }
 
@@ -19,10 +19,11 @@ export class CraftSystem {
       return { ok: false, reason: '素材が足りません。' };
     }
 
-    this.inventory.consumeMaterial('wood', WOOD_SWORD_RECIPE.wood);
-    this.inventory.consumeMaterial('slimeJelly', WOOD_SWORD_RECIPE.slimeJelly);
-    this.inventory.addWeapon('woodSword');
+    WOOD_SWORD_RECIPE.materials.forEach((material) => {
+      this.inventory.consumeMaterial(material.materialId, material.count);
+    });
 
+    this.inventory.addWeapon('woodSword');
     return { ok: true };
   }
 }

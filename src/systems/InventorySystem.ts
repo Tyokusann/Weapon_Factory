@@ -6,8 +6,14 @@ export class InventorySystem {
   private equippedWeapon: WeaponId = 'stick';
 
   constructor() {
+    this.reset();
+  }
+
+  reset(): void {
     this.materials.set('wood', 0);
     this.materials.set('slimeJelly', 0);
+    this.weapons = new Set<WeaponId>(['stick']);
+    this.equippedWeapon = 'stick';
   }
 
   addMaterial(id: MaterialId, amount = 1): void {
@@ -25,6 +31,13 @@ export class InventorySystem {
     return this.materials.get(id) ?? 0;
   }
 
+  getMaterialsSnapshot(): Record<MaterialId, number> {
+    return {
+      wood: this.getMaterialCount('wood'),
+      slimeJelly: this.getMaterialCount('slimeJelly')
+    };
+  }
+
   hasWeapon(id: WeaponId): boolean {
     return this.weapons.has(id);
   }
@@ -36,9 +49,5 @@ export class InventorySystem {
 
   getEquippedWeapon(): WeaponId {
     return this.equippedWeapon;
-  }
-
-  setEquippedWeapon(id: WeaponId): void {
-    if (this.hasWeapon(id)) this.equippedWeapon = id;
   }
 }

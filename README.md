@@ -1,18 +1,47 @@
-# Weapon Factory (MVP)
+# 2DクラフトアクションRPG（Weapon Factory）
 
-2DクラフトアクションRPGのMVP実装です。TypeScript + Phaser 3 + Viteで構成しています。
+READMEと `docs/basic-spec.md` の仕様に沿って、MVPを実装しています。
 
-## 現在の実装範囲
+## コンセプト
 
-- タイトル画面（Enter/クリックで開始）
+探索で素材を集め、武器をクラフトし、敵を倒して次に進む2DクラフトアクションRPGです。
+
+## 技術構成
+
+- TypeScript
+- Phaser 3
+- Vite
+- Cloudflare Wrangler（静的アセット配信）
+
+## MVP実装範囲（仕様準拠）
+
+- タイトル画面（Enter / クリックで開始）
 - 森フィールド1マップ
 - プレイヤー移動（WASD / 矢印）
 - 攻撃（Space）
-- 素材採取（Eで木材）
+- 採取（E）
 - 敵1種類（スライム）
-- HP表示と被ダメージ
-- クラフト画面（Cで遷移）
-- 木の剣レシピ（木材x3 + スライムゼリーx1）
+- HP管理（プレイヤー / 敵）
+- インベントリ表示（I）
+- クラフト画面（C、戻るは Esc/C）
+- 木の剣クラフト（木材x3 + スライムゼリーx1）
+
+## 操作方法
+
+- 移動: `WASD` または `矢印キー`
+- 攻撃: `Space`
+- 採取: `E`
+- インベントリ表示切替: `I`
+- クラフト画面: `C`
+- クラフト決定: `Enter`
+- クラフト画面から戻る: `Esc` または `C`
+
+## データ構成（仕様書 9章 対応）
+
+- `src/data/materials.json`
+- `src/data/weapons.json`
+- `src/data/recipes.json`
+- `src/data/enemies.json`
 
 ## 開発コマンド
 
@@ -22,26 +51,16 @@ npm run dev
 npm run build
 ```
 
-## 操作方法
+## Cloudflare デプロイ
 
-- 移動: `WASD` または `矢印キー`
-- 攻撃: `Space`
-- 採取: `E`
-- クラフト画面: `C`
-- クラフト画面から戻る: `Esc` または `C`
+`wrangler.toml` で静的アセット配信を設定しています。
 
-## 目標体験
-
-「森で素材を集め、木の剣を作り、スライムを倒せる」
-
-
-## Cloudflare Workers / Pages デプロイ（Wrangler）
-
-このリポジトリは静的アセット配信を想定し、`wrangler.toml` に静的アセット配信設定（`[assets] directory = "./dist"`）を設定しています。
+```toml
+[assets]
+directory = "./dist"
+```
 
 ```bash
 npm run build
 npx wrangler versions upload
 ```
-
-`npx wrangler versions upload` が `Missing entry-point` で失敗する場合は、`wrangler.toml` が存在することと `dist` が生成済みであることを確認してください。
