@@ -1,0 +1,11 @@
+[
+  {
+    "id": "slime",
+    "name": "ぷにスライム",
+    "hp": 6,
+    "contactDamage": 1,
+    "dropTable": [
+      { "materialId": "slimeJelly", "count": 1, "rate": 1 }
+    ]
+  }
+]

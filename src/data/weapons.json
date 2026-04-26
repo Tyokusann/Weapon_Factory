@@ -1,0 +1,16 @@
+[
+  {
+    "id": "stick",
+    "name": "枝",
+    "attack": 1,
+    "attackSpeed": 1,
+    "range": 56
+  },
+  {
+    "id": "woodSword",
+    "name": "木の剣",
+    "attack": 3,
+    "attackSpeed": 1.2,
+    "range": 64
+  }
+]

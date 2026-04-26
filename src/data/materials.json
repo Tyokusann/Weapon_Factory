@@ -1,0 +1,14 @@
+[
+  {
+    "id": "wood",
+    "name": "木材",
+    "description": "森で採れる基本素材",
+    "stackable": true
+  },
+  {
+    "id": "slimeJelly",
+    "name": "スライムゼリー",
+    "description": "スライムから採れる粘性素材",
+    "stackable": true
+  }
+]

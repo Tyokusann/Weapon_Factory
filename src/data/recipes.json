@@ -1,0 +1,11 @@
+[
+  {
+    "id": "craft_wood_sword",
+    "resultItemId": "woodSword",
+    "resultCount": 1,
+    "materials": [
+      { "materialId": "wood", "count": 3 },
+      { "materialId": "slimeJelly", "count": 1 }
+    ]
+  }
+]
